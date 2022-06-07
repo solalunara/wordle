@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+</head>
+<body id="body" style="color: aqua; background-color: black; text-align: center;">
+
+    <h1>Wordle</h1>
+
+    <div id="guesses">
+    </div>
+
+    <div id="keys" style="margin:30px auto 0px auto">
+    </div>
+
+    <script src="words.js"></script>
+    <script>
+        const Keys = 
+        [
+            [ 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p' ],
+            [ 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l' ],
+            [ 'z', 'x', 'c', 'v', 'b', 'n', 'm' ]
+        ]
+
+        const SecretWord = La[ Math.floor( Math.random() * La.length ) ];
+        console.info( 'SecretWord: ' + SecretWord );
+
+        let SecretDict = {}
+        for ( let char = 'a'.charCodeAt( 0 ); char <= 'z'.charCodeAt( 0 ); char++ )
+        {
+            SecretDict[ String.fromCharCode( char ) ] = [];
+            for ( let i = 0; i < SecretWord.length; ++i )
+            {
+                if ( SecretWord.charCodeAt( i ) === char )
+                    SecretDict[ String.fromCharCode( char ) ].push( i );
+            }
+        }
+
+        let GuessIndex = 1;
+        let LetterIndex = 1;
+        function OnKeyDown( e )
+        {
+            if ( GuessIndex === 7 ) return; //game over
+            
+            //make everything lower case
+            let key = e.key.toLowerCase();
+
+            //not a traditional input
+            if ( key.length !== 1 )
+            {
+                //delete current key
+                if ( key === 'backspace' )
+                {
+                    LetterIndex--;
+                    if ( LetterIndex < 1 ) LetterIndex = 1;
+                    document.getElementById( GuessIndex + '-' + LetterIndex ).innerText = '';
+                    return;
+                }
+                //submit the current guess
+                else if ( key === 'enter' )
+                {
+                    //only submit if at the end of the line
+                    if ( LetterIndex === 6 )
+                    {
+                        let word = "";
+                        for ( let i = 1; i <= 5; ++i )
+                        {
+                            word += document.getElementById( GuessIndex + '-' + i ).innerHTML;
+                        }
+                        console.info( 'guess: ' + word );
+                        //check to see if word is valid
+                        if ( La.includes( word ) )
+                        {
+                            //copy dict so we can remove letters as we go (for duplicate letters)
+                            let SecretDictCopy = JSON.parse( JSON.stringify( SecretDict ) );
+                            let isGreen = [ false, false, false, false, false ]
+                            for ( let i = 1; i <= 5; ++i )
+                            {
+                                let box = document.getElementById( GuessIndex + '-' + i );
+                                let key = document.getElementById( word[ i - 1 ] );
+                                if ( key === undefined )
+                                    continue; //key not on qwerty basic keyboard
+
+                                //letter is in the word
+                                if ( SecretDictCopy[ word[ i - 1 ] ].length > 0 )
+                                {
+                                    //if at right index colour green
+                                    for ( let j = 0; j < SecretDictCopy[ word[ i - 1 ] ].length; ++j )
+                                    {
+                                        if ( SecretDictCopy[ word[ i - 1 ] ][ j ] === i - 1 )
+                                        {
+                                            box.outerHTML = box.outerHTML.replace( 'background-color: white', 'background-color: green' );
+                                            key.outerHTML = key.outerHTML.replace( 'background-color: aqua', 'background-color: green' )
+                                            SecretDictCopy[ word[ i - 1 ] ].splice( j, 1 );
+                                            isGreen[ i - 1 ] = true;
+                                            break;
+                                        }
+                                    }
+                                    //otherwise colour it yellow
+                                    if ( !isGreen[ i - 1 ] )
+                                    {
+                                        box.outerHTML = box.outerHTML.replace( 'background-color: white', 'background-color: yellow' );
+                                        key.outerHTML = key.outerHTML.replace( 'background-color: aqua', 'background-color: yellow' )
+                                        SecretDictCopy[ word[ i - 1 ] ].splice( 0, 1 );
+                                    }
+                                }
+                                else 
+                                {
+                                    box.outerHTML = box.outerHTML.replace( 'background-color: white', 'background-color: grey' );
+                                    key.outerHTML = key.outerHTML.replace( 'background-color: aqua', 'background-color: grey' )
+                                }
+                            }
+                            //check if game is won
+                            if ( isGreen.every( ( value, index, array ) => { return value } ) )
+                            {
+                                console.info( "won" );
+                                GuessIndex = 999;
+                                LetterIndex = 999;
+                                document.getElementById( 'keys' ).innerHTML = '<h2>You Win!</h2>';
+                                return;
+                            }
+                            //game over
+                            if ( GuessIndex++ === 6 )
+                            {
+                                document.getElementById( 'keys' ).innerHTML = '<h2>You Lose. The right answer was ' + SecretWord + '.</h2>';
+                            }
+                            LetterIndex = 1;
+                            return;
+                        }
+                    }
+                    return;
+                }
+                else return;
+            }
+            if ( key === ' ' ) return;
+            if ( LetterIndex === 6 ) return;
+            document.getElementById( GuessIndex + '-' + LetterIndex++ ).innerHTML = key;
+        }
+        function OnKeyClick( elem )
+        {
+            document.getElementById( GuessIndex + '-' + LetterIndex++ ).innerHTML = elem.innerHTML;
+        }
+        var body = document.getElementById( 'body' );
+        body.addEventListener( 'keydown', OnKeyDown );
+        var guesses = document.getElementById( 'guesses' );
+        for ( let i = 1; i <= 6; ++i )
+        {
+            guesses.innerHTML += "<div id=\"guess" + i + "\"></div>";
+            var elem = document.getElementById( 'guess' + i );
+            for ( let j = 1; j <= 5; ++j )
+            {
+                elem.innerHTML += "<textarea \
+                    id=\"" + i + "-" + j + "\" \
+                    rows=\"1\" \
+                    cols=\"1\" \
+                    style=\"resize: none; font-size: 30px; background-color: white; margin: 5px 5px;\" \
+                    readonly=\"true\"></textarea>";
+            }
+        }
+        var keys = document.getElementById( 'keys' );
+        for ( let i = 0; i < Keys.length; ++i )
+        {
+            keys.innerHTML += "<div id=\"row" + i + "\"></div>";
+            var elem = document.getElementById( 'row' + i );
+            for ( let j = 0; j < Keys[ i ].length; ++j )
+            {
+                elem.innerHTML += "<textarea \
+                    id=\"" + Keys[ i ][ j ] + "\" \
+                    rows=\"1\" \
+                    cols=\"1\" \
+                    style=\"resize: none; font-size: 10px; background-color: aqua; margin: 1px 1px;\" \
+                    readonly=\"true\" \
+                    onclick=\"OnKeyClick( " + Keys[ i ][ j ] + " )\">" + Keys[ i ][ j ] + "</textarea>";
+            }
+        }
+        for ( let i = 0; i < Keys.length; ++i )
+        {
+            for ( let j = 0; j < Keys[ i ].length; ++j )
+            {
+                //document.getElementById( Keys[ i ][ j ] ).addEventListener( 'click', OnKeyClick );
+            }
+        }
+    </script>
+</body>
+</html>
