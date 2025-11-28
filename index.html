@@ -14,7 +14,10 @@
     <div id="keys" style="margin:30px auto 0px auto">
     </div>
 
-    <button onclick=SubmitGuess()>Enter</button>
+    <div>
+        <button onclick=SubmitGuess()>Enter</button>
+        <button onclick=Backspace()>Backspace</button>
+    </div>
 
     <script src="words.js"></script>
     <script>
@@ -114,6 +117,14 @@
             }
             return;
         }
+
+        function Backspace()
+        {
+            LetterIndex--;
+            if ( LetterIndex < 1 ) LetterIndex = 1;
+            document.getElementById( GuessIndex + '-' + LetterIndex ).innerText = '';
+            return;
+        }
         
         function OnKeyDown( e )
         {
@@ -128,9 +139,7 @@
                 //delete current key
                 if ( key === 'backspace' )
                 {
-                    LetterIndex--;
-                    if ( LetterIndex < 1 ) LetterIndex = 1;
-                    document.getElementById( GuessIndex + '-' + LetterIndex ).innerText = '';
+                    Backspace();
                     return;
                 }
                 //submit the current guess
