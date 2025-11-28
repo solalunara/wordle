@@ -14,6 +14,8 @@
     <div id="keys" style="margin:30px auto 0px auto">
     </div>
 
+    <button onclick=SubmitGuess()>Enter</button>
+
     <script src="words.js"></script>
     <script>
         const Keys = 
@@ -39,6 +41,80 @@
 
         let GuessIndex = 1;
         let LetterIndex = 1;
+        function SubmitGuess()
+        {
+            //only submit if at the end of the line
+            if ( LetterIndex === 6 )
+            {
+                let word = "";
+                for ( let i = 1; i <= 5; ++i )
+                {
+                    word += document.getElementById( GuessIndex + '-' + i ).innerHTML;
+                }
+                console.info( 'guess: ' + word );
+                //check to see if word is valid
+                if ( La.includes( word ) )
+                {
+                    //copy dict so we can remove letters as we go (for duplicate letters)
+                    let SecretDictCopy = JSON.parse( JSON.stringify( SecretDict ) );
+                    let isGreen = [ false, false, false, false, false ]
+                    for ( let i = 1; i <= 5; ++i )
+                    {
+                        let box = document.getElementById( GuessIndex + '-' + i );
+                        let key = document.getElementById( word[ i - 1 ] );
+                        if ( key === undefined )
+                            continue; //key not on qwerty basic keyboard
+
+                        //letter is in the word
+                        if ( SecretDictCopy[ word[ i - 1 ] ].length > 0 )
+                        {
+                            //if at right index colour green
+                            for ( let j = 0; j < SecretDictCopy[ word[ i - 1 ] ].length; ++j )
+                            {
+                                if ( SecretDictCopy[ word[ i - 1 ] ][ j ] === i - 1 )
+                                {
+                                    box.outerHTML = box.outerHTML.replace( 'background-color: white', 'background-color: green' );
+                                    key.outerHTML = key.outerHTML.replace( 'background-color: aqua', 'background-color: green' )
+                                    SecretDictCopy[ word[ i - 1 ] ].splice( j, 1 );
+                                    isGreen[ i - 1 ] = true;
+                                    break;
+                                }
+                            }
+                            //otherwise colour it yellow
+                            if ( !isGreen[ i - 1 ] )
+                            {
+                                box.outerHTML = box.outerHTML.replace( 'background-color: white', 'background-color: yellow' );
+                                key.outerHTML = key.outerHTML.replace( 'background-color: aqua', 'background-color: yellow' )
+                                SecretDictCopy[ word[ i - 1 ] ].splice( 0, 1 );
+                            }
+                        }
+                        else 
+                        {
+                            box.outerHTML = box.outerHTML.replace( 'background-color: white', 'background-color: grey' );
+                            key.outerHTML = key.outerHTML.replace( 'background-color: aqua', 'background-color: grey' )
+                        }
+                    }
+                    //check if game is won
+                    if ( isGreen.every( ( value, index, array ) => { return value } ) )
+                    {
+                        console.info( "won" );
+                        GuessIndex = 999;
+                        LetterIndex = 999;
+                        document.getElementById( 'keys' ).innerHTML = '<h2>You Win!</h2>';
+                        return;
+                    }
+                    //game over
+                    if ( GuessIndex++ === 6 )
+                    {
+                        document.getElementById( 'keys' ).innerHTML = '<h2>You Lose. The right answer was ' + SecretWord + '.</h2>';
+                    }
+                    LetterIndex = 1;
+                    return;
+                }
+            }
+            return;
+        }
+        
         function OnKeyDown( e )
         {
             if ( GuessIndex === 7 ) return; //game over
@@ -60,75 +136,7 @@
                 //submit the current guess
                 else if ( key === 'enter' )
                 {
-                    //only submit if at the end of the line
-                    if ( LetterIndex === 6 )
-                    {
-                        let word = "";
-                        for ( let i = 1; i <= 5; ++i )
-                        {
-                            word += document.getElementById( GuessIndex + '-' + i ).innerHTML;
-                        }
-                        console.info( 'guess: ' + word );
-                        //check to see if word is valid
-                        if ( La.includes( word ) )
-                        {
-                            //copy dict so we can remove letters as we go (for duplicate letters)
-                            let SecretDictCopy = JSON.parse( JSON.stringify( SecretDict ) );
-                            let isGreen = [ false, false, false, false, false ]
-                            for ( let i = 1; i <= 5; ++i )
-                            {
-                                let box = document.getElementById( GuessIndex + '-' + i );
-                                let key = document.getElementById( word[ i - 1 ] );
-                                if ( key === undefined )
-                                    continue; //key not on qwerty basic keyboard
-
-                                //letter is in the word
-                                if ( SecretDictCopy[ word[ i - 1 ] ].length > 0 )
-                                {
-                                    //if at right index colour green
-                                    for ( let j = 0; j < SecretDictCopy[ word[ i - 1 ] ].length; ++j )
-                                    {
-                                        if ( SecretDictCopy[ word[ i - 1 ] ][ j ] === i - 1 )
-                                        {
-                                            box.outerHTML = box.outerHTML.replace( 'background-color: white', 'background-color: green' );
-                                            key.outerHTML = key.outerHTML.replace( 'background-color: aqua', 'background-color: green' )
-                                            SecretDictCopy[ word[ i - 1 ] ].splice( j, 1 );
-                                            isGreen[ i - 1 ] = true;
-                                            break;
-                                        }
-                                    }
-                                    //otherwise colour it yellow
-                                    if ( !isGreen[ i - 1 ] )
-                                    {
-                                        box.outerHTML = box.outerHTML.replace( 'background-color: white', 'background-color: yellow' );
-                                        key.outerHTML = key.outerHTML.replace( 'background-color: aqua', 'background-color: yellow' )
-                                        SecretDictCopy[ word[ i - 1 ] ].splice( 0, 1 );
-                                    }
-                                }
-                                else 
-                                {
-                                    box.outerHTML = box.outerHTML.replace( 'background-color: white', 'background-color: grey' );
-                                    key.outerHTML = key.outerHTML.replace( 'background-color: aqua', 'background-color: grey' )
-                                }
-                            }
-                            //check if game is won
-                            if ( isGreen.every( ( value, index, array ) => { return value } ) )
-                            {
-                                console.info( "won" );
-                                GuessIndex = 999;
-                                LetterIndex = 999;
-                                document.getElementById( 'keys' ).innerHTML = '<h2>You Win!</h2>';
-                                return;
-                            }
-                            //game over
-                            if ( GuessIndex++ === 6 )
-                            {
-                                document.getElementById( 'keys' ).innerHTML = '<h2>You Lose. The right answer was ' + SecretWord + '.</h2>';
-                            }
-                            LetterIndex = 1;
-                            return;
-                        }
-                    }
+                    SubmitGuess();
                     return;
                 }
                 else return;
